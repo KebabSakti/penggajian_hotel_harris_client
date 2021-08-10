@@ -1,24 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useContext } from "react";
+import routes from "./routes";
+import { AuthContext } from "./contexts/AuthContext";
+import { BrowserRouter, Route, Switch, Redirect } from "react-router-dom";
+import AuthPage from "./pages/AuthPage";
 
 function App() {
+  const [user] = useContext(AuthContext);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Switch>
+        <Route path="/" exact={true}>
+          <AuthPage />
+        </Route>
+        {routes.map((route, index) => {
+          return (
+            <Route
+              key={index}
+              path={route.path}
+              exact={route.exact}
+              component={(props) => {
+                if (user === null) {
+                  return <Redirect to="/" />;
+                } else {
+                  return (
+                    <route.layout {...props}>
+                      <route.component {...props} />
+                    </route.layout>
+                  );
+                }
+              }}
+            />
+          );
+        })}
+        <Route path="*" component={() => <Redirect to="/" />} />
+      </Switch>
+    </BrowserRouter>
   );
 }
 
