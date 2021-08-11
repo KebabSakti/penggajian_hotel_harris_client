@@ -1,18 +1,22 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Button, Layout, Menu, message } from "antd";
 import { AuthContext } from "../contexts/AuthContext";
+import { Footer } from "antd/lib/layout/layout";
 import {
   HomeOutlined,
   MenuOutlined,
   ContactsOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
-import { Footer } from "antd/lib/layout/layout";
 
 function Template({ children, ...props }) {
   const { Header, Content, Sider } = Layout;
-  const [, , logout] = useContext(AuthContext);
+  const [, , logout, check] = useContext(AuthContext);
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    check();
+  }, []);
 
   async function navigate(target) {
     if (target !== props.history.location.pathname) {

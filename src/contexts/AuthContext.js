@@ -1,5 +1,6 @@
 import React, { useState, createContext, useEffect } from "react";
-import { loginAuth, logoutAuth } from "../api/Auth";
+import { loginAuth, logoutAuth, checkAuth } from "../api/Auth";
+import { message, notification } from "antd";
 
 export const AuthContext = createContext();
 
@@ -25,6 +26,21 @@ export const AuthProvider = ({ children }) => {
     return response;
   }
 
+  async function check() {
+    try {
+      await checkAuth();
+    } catch (e) {
+      if (e.response.status === 401 || e.response.status === 419) {
+        notification.warning({
+          message: "Sesi anda telah berakhir, login kembali untuk melanjutkan",
+        });
+        setUser(null);
+      } else {
+        message.error(e.message);
+      }
+    }
+  }
+
   async function logout() {
     const response = await logoutAuth();
 
@@ -34,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={[user, login, logout]}>
+    <AuthContext.Provider value={[user, login, logout, check]}>
       {children}
     </AuthContext.Provider>
   );
