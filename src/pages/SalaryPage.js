@@ -1,26 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { SearchOutlined } from "@ant-design/icons";
 import { fetchSalaries } from "../api/Salary";
-import { Input, message, Table, Button, Space, DatePicker } from "antd";
 import moment from "moment";
+import {
+  Input,
+  message,
+  Table,
+  Button,
+  Space,
+  DatePicker,
+  Tooltip,
+  Divider,
+} from "antd";
 
 function SalaryPage() {
   const { RangePicker } = DatePicker;
 
   const dateFormat = "DD/MM/YYYY";
-  const [salaries, setSalaries] = useState([]);
+  const [records, setRecords] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [sorting, setSorting] = useState({});
+
   const [periode, setPeriode] = useState([
-    moment().startOf("month"),
-    moment().endOf("month"),
+    moment().startOf("month").format("DD-MM-YYYY"),
+    moment().endOf("month").format("DD-MM-YYYY"),
   ]);
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 10,
     showLessItems: true,
+    responsive: true,
   });
 
   const columns = [
@@ -40,7 +52,14 @@ function SalaryPage() {
       title: "Position",
       dataIndex: "employee_position",
       sorter: true,
-      ellipsis: true,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (employee_position) => (
+        <Tooltip placement="topLeft" title={employee_position}>
+          {employee_position}
+        </Tooltip>
+      ),
     },
     {
       title: "Gaji Pokok",
@@ -54,8 +73,8 @@ function SalaryPage() {
     fetch(
       {
         size: pagination.pageSize,
-        date_start: periode[0].format("DD-MM-YYYY"),
-        date_end: periode[1].format("DD-MM-YYYY"),
+        date_start: periode[0],
+        date_end: periode[1],
       },
       { page: pagination.current }
     );
@@ -65,7 +84,7 @@ function SalaryPage() {
     try {
       setLoading(true);
       await fetchSalaries(datas, params).then((response) => {
-        // console.log(response);
+        console.log(response);
 
         let datas = response.data.data.map((item) => {
           return { ...item, key: item.salary_id };
@@ -75,13 +94,14 @@ function SalaryPage() {
           datas = sortItems(datas);
         }
 
-        setSalaries(datas);
+        setRecords(datas);
 
         setPagination({
           ...pagination,
           current: response.data.current_page,
           total: response.data.total,
           pageSize: response.data.per_page,
+          pageSizeOptions: ["10", response.data.total],
         });
 
         setLoading(false);
@@ -93,14 +113,26 @@ function SalaryPage() {
   }
 
   function datePickerHandler(dates, dateStrings) {
-    setPeriode(dates ?? ["", ""]);
+    if (dates != null) {
+      setPeriode([
+        dates[0].format("DD-MM-YYYY"),
+        dates[1].format("DD-MM-YYYY"),
+      ]);
+    } else {
+      setPeriode(["", ""]);
+    }
   }
 
   function searchBox(e) {
     const keyword = e.target.value;
 
     fetch(
-      { size: pagination.pageSize, keyword: keyword },
+      {
+        size: pagination.pageSize,
+        keyword: keyword,
+        date_start: periode[0],
+        date_end: periode[1],
+      },
       { page: pagination.current }
     );
   }
@@ -130,6 +162,8 @@ function SalaryPage() {
     fetch(
       {
         size: pagination.pageSize,
+        date_start: periode[0],
+        date_end: periode[1],
       },
       { page: pagination.current }
     );
@@ -141,7 +175,8 @@ function SalaryPage() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: "20px" }}>Data Gaji Karyawan</h1>
+      <h1>Data Gaji Karyawan</h1>
+      <Divider />
       <div style={{ marginBottom: "10px" }}>
         <Space>
           <Button
@@ -165,7 +200,6 @@ function SalaryPage() {
               datePickerHandler(dates, dateStrings)
             }
           />
-          <Button type="primary">Terapkan</Button>
         </Space>
         <Input
           onKeyUp={searchBox}
@@ -177,19 +211,14 @@ function SalaryPage() {
       <Table
         loading={loading}
         columns={columns}
-        dataSource={salaries}
+        dataSource={records}
         pagination={pagination}
         sortDirections={["ascend", "descend", "ascend"]}
-        onChange={(pagination, filters, sorter) => {
-          onChange(pagination, filters, sorter);
-        }}
+        onChange={(pagination, filters, sorter) =>
+          onChange(pagination, filters, sorter)
+        }
         rowSelection={{
-          onSelect: (record, selected, selectedRows, nativeEvent) => {
-            selectRows(selectedRows);
-          },
-          onSelectAll: (selected, selectedRows, changeRows) => {
-            selectRows(selectedRows);
-          },
+          onChange: (selectedRowKeys, selectedRows) => selectRows(selectedRows),
         }}
       />
     </div>
