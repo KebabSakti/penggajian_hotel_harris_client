@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { SearchOutlined } from "@ant-design/icons";
 import { fetchSalaries } from "../api/Salary";
 import moment from "moment";
-import { ImportOutlined, MailOutlined } from "@ant-design/icons";
 import {
   Input,
   message,
@@ -12,11 +11,9 @@ import {
   DatePicker,
   Tooltip,
   Divider,
-  Row,
-  Col,
 } from "antd";
 
-function SalaryPage() {
+function TableCustom({ columns, rowSelection }) {
   const { RangePicker } = DatePicker;
 
   const dateFormat = "DD/MM/YYYY";
@@ -181,59 +178,35 @@ function SalaryPage() {
       <h1>Data Gaji Karyawan</h1>
       <Divider />
       <div style={{ marginBottom: "10px" }}>
-        <Row gutter={[16, 10]} justify="space-between">
-          <Col xs={24} lg={18}>
-            <Row justify="start" gutter={[10, 10]}>
-              <Col xs={24} lg={8}>
-                <RangePicker
-                  defaultValue={[
-                    moment(periode[0], dateFormat),
-                    moment(periode[1], dateFormat),
-                  ]}
-                  format={dateFormat}
-                  ranges={{
-                    "Hari Ini": [moment(), moment()],
-                    "Bulan Ini": [
-                      moment().startOf("month"),
-                      moment().endOf("month"),
-                    ],
-                    "Tahun ini": [
-                      moment().startOf("year"),
-                      moment().endOf("year"),
-                    ],
-                  }}
-                  onChange={(dates, dateStrings) =>
-                    datePickerHandler(dates, dateStrings)
-                  }
-                />
-              </Col>
-              <Col xs={24} lg={6}>
-                <Button type="primary" block={true} icon={<ImportOutlined />}>
-                  Import Data
-                </Button>
-              </Col>
-              <Col xs={24} lg={6}>
-                <Button
-                  type="primary"
-                  block={true}
-                  icon={<MailOutlined />}
-                  disabled={selectedRows.length == 0 ? true : false}
-                >
-                  ({selectedRows.length}) Kirim Email
-                </Button>
-              </Col>
-            </Row>
-          </Col>
-
-          <Col xs={24} lg={6}>
-            <Input
-              onKeyUp={searchBox}
-              style={{ float: "right" }}
-              placeholder="Ketik untuk mencari"
-              prefix={<SearchOutlined />}
-            />
-          </Col>
-        </Row>
+        <Space>
+          <Button
+            type="primary"
+            disabled={selectedRows.length == 0 ? true : false}
+          >
+            ({selectedRows.length}) Kirim Email
+          </Button>
+          <RangePicker
+            defaultValue={[
+              moment(periode[0], dateFormat),
+              moment(periode[1], dateFormat),
+            ]}
+            format={dateFormat}
+            ranges={{
+              "Hari Ini": [moment(), moment()],
+              "Bulan Ini": [moment().startOf("month"), moment().endOf("month")],
+              "Tahun ini": [moment().startOf("year"), moment().endOf("year")],
+            }}
+            onChange={(dates, dateStrings) =>
+              datePickerHandler(dates, dateStrings)
+            }
+          />
+        </Space>
+        <Input
+          onKeyUp={searchBox}
+          style={{ float: "right", width: "200px" }}
+          placeholder="Ketik untuk mencari"
+          prefix={<SearchOutlined />}
+        />
       </div>
       <Table
         loading={loading}
@@ -252,4 +225,4 @@ function SalaryPage() {
   );
 }
 
-export default SalaryPage;
+export default TableCustom;
