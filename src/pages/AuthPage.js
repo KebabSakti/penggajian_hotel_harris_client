@@ -23,7 +23,7 @@ function AuthPage() {
   }
 
   if (user != null) {
-    return <Redirect to="/home" />;
+    return <Redirect to="/salary" />;
   }
 
   return (
