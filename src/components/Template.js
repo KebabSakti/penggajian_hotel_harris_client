@@ -1,23 +1,15 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Button, Layout, Menu, message } from "antd";
+import { Button, Layout, Menu, Drawer, message, Col } from "antd";
 import { AuthContext } from "../contexts/AuthContext";
 import { Footer } from "antd/lib/layout/layout";
-import {
-  MenuOutlined,
-  ContactsOutlined,
-  LogoutOutlined,
-  UserSwitchOutlined,
-  AuditOutlined,
-  ApartmentOutlined,
-  BlockOutlined,
-  ExceptionOutlined,
-  KeyOutlined,
-} from "@ant-design/icons";
+import { MenuOutlined } from "@ant-design/icons";
+import MenuMain from "./MenuMain";
 
 function Template({ children, ...props }) {
   const { Header, Content, Sider } = Layout;
   const [, , logout, check] = useContext(AuthContext);
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerCollapsed, setDrawerCollapsed] = useState(false);
 
   useEffect(() => {
     check();
@@ -45,10 +37,29 @@ function Template({ children, ...props }) {
     setCollapsed(value);
   }
 
+  function toggleDrawer(value) {
+    setDrawerCollapsed(value);
+  }
+
   return (
     <Layout style={{ minHeight: "100vh" }} hasSider={true}>
+      <Drawer
+        maskClosable={() => toggleDrawer(!drawerCollapsed)}
+        placement="left"
+        closable={true}
+        visible={drawerCollapsed}
+        getContainer={false}
+        bodyStyle={{ padding: "0px", margin: "0px" }}
+        style={{ position: "absolute" }}
+        onClose={() => toggleDrawer(!drawerCollapsed)}
+      >
+        <div style={{ paddingTop: "50px" }}>
+          <MenuMain navigate={navigate} {...props} />
+        </div>
+      </Drawer>
       <Sider
         collapsible
+        collapsedWidth="0"
         width="250"
         breakpoint="lg"
         trigger={null}
@@ -61,79 +72,21 @@ function Template({ children, ...props }) {
         <div
           style={{ height: "28px", margin: "16px", backgroundColor: "#FBFBFB" }}
         />
-        <Menu
-          theme="light"
-          defaultSelectedKeys={["/home"]}
-          mode="inline"
-          selectedKeys={props.history.location.pathname}
-          onClick={(event) => {
-            navigate(event.key);
-          }}
-        >
-          <Menu.Item
-            key="/salary"
-            icon={<ContactsOutlined style={{ fontSize: "18px" }} />}
-          >
-            Penggajian
-          </Menu.Item>
-          <Menu.Item
-            key="/employee"
-            icon={<UserSwitchOutlined style={{ fontSize: "18px" }} />}
-          >
-            Karyawan
-          </Menu.Item>
-          <Menu.Item
-            key="/department"
-            icon={<AuditOutlined style={{ fontSize: "18px" }} />}
-          >
-            Department
-          </Menu.Item>
-
-          <Menu.Item
-            key="/position"
-            icon={<ApartmentOutlined style={{ fontSize: "18px" }} />}
-          >
-            Jabatan
-          </Menu.Item>
-
-          <Menu.Item
-            key="/status"
-            icon={<BlockOutlined style={{ fontSize: "18px" }} />}
-          >
-            Status
-          </Menu.Item>
-
-          <Menu.Item
-            key="/tax"
-            icon={<ExceptionOutlined style={{ fontSize: "18px" }} />}
-          >
-            Tax Status
-          </Menu.Item>
-
-          <Menu.Item
-            key="/password"
-            icon={<KeyOutlined style={{ fontSize: "18px" }} />}
-          >
-            Password
-          </Menu.Item>
-
-          <Menu.Item
-            key="/logout"
-            icon={<LogoutOutlined style={{ fontSize: "18px" }} />}
-          >
-            Logout
-          </Menu.Item>
-        </Menu>
+        <MenuMain navigate={navigate} {...props} />
       </Sider>
       <Layout>
         <Header style={{ backgroundColor: "#FBFBFB", padding: "0px 18px" }}>
-          <Button
-            onClick={() => {
-              toggleSidebar(!collapsed);
-            }}
-          >
-            <MenuOutlined />
-          </Button>
+          {collapsed && (
+            <Button
+              type="dashed"
+              shape="circle"
+              onClick={() => {
+                toggleDrawer(!drawerCollapsed);
+              }}
+            >
+              <MenuOutlined />
+            </Button>
+          )}
         </Header>
         <Content style={{ margin: "16px" }}>
           <div style={{ padding: 24, minHeight: 360, backgroundColor: "#fff" }}>
