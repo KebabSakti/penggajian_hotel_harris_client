@@ -11,9 +11,7 @@ import {
   deleteSalary,
 } from "../api/Salary";
 import {
-  ImportOutlined,
   MailOutlined,
-  PlusCircleOutlined,
   MenuFoldOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons";
@@ -258,24 +256,20 @@ function SalaryPage() {
       fixed: "right",
       render: (text, record) => {
         const menu = (
-          <Menu
-            onClick={(key) => {
-              menuItemHandler(key, record);
-            }}
-          >
-            {/* <Menu.Item key="email">Email Slip Gaji</Menu.Item> */}
+          <Menu onClick={(key) => menuItemHandler(key, record)}>
             <Menu.Item key="cetak">Cetak Slip Gaji</Menu.Item>
+            <Menu.Item key="email">Email Slip Gaji</Menu.Item>
             <Menu.Divider style={{ padding: "0px", margin: "0px" }} />
-            <Menu.Item key="edit">Edit</Menu.Item>
+            <Menu.Item key="edit">Edit Data</Menu.Item>
             <Menu.Item key="hapus">
-              <Text type="danger">Hapus</Text>
+              <Text type="danger">Hapus Data</Text>
             </Menu.Item>
           </Menu>
         );
 
         return (
           <Dropdown
-            trigger={["click"]}
+            trigger={["click", "hover"]}
             placement="topCenter"
             overlay={menu}
             arrow
@@ -304,7 +298,7 @@ function SalaryPage() {
     try {
       setLoading(true);
       await fetchSalaries(datas, params).then((response) => {
-        console.log(response);
+        // console.log(response.data);
 
         let datas = response.data.data.map((item) => {
           return { ...item, key: item.salary_id };
@@ -321,6 +315,7 @@ function SalaryPage() {
           current: response.data.current_page,
           total: response.data.total,
           pageSize: response.data.per_page,
+          showSizeChanger: response.data.total > 10 ? true : false,
           pageSizeOptions: ["10", response.data.total],
         });
 
@@ -421,7 +416,7 @@ function SalaryPage() {
     mMessage("Memproses file. mohon tunggu", "loading");
 
     if (values.file.status === "done") {
-      console.log(values.file);
+      // console.log(values.file);
 
       fetch(
         {
@@ -443,6 +438,40 @@ function SalaryPage() {
   function toggleModal(value) {
     setModalContent(value);
     setShowModal(true);
+  }
+
+  function topMenuItemHandler(target) {
+    switch (target.key) {
+      case "add":
+        toggleModal(null);
+        break;
+
+      case "excel":
+        window.open(
+          process.env.REACT_APP_BASE_URL +
+            "/export/salary/xlsx/start/" +
+            periode[0] +
+            "/end/" +
+            periode[1]
+        );
+        break;
+
+      case "csv":
+        window.open(
+          process.env.REACT_APP_BASE_URL +
+            "/export/salary/csv/start/" +
+            periode[0] +
+            "/end/" +
+            periode[1]
+        );
+        break;
+
+      case "download":
+        window.open(
+          process.env.REACT_APP_BASE_URL + "/export/salary/skeleton/"
+        );
+        break;
+    }
   }
 
   function menuItemHandler(target, record) {
@@ -558,32 +587,40 @@ function SalaryPage() {
           <Col xs={24} lg={18}>
             <Row justify="start" gutter={[10, 10]}>
               <Col xs={24} lg={4}>
-                <Button
-                  type="primary"
-                  block={true}
-                  icon={<PlusCircleOutlined />}
-                  onClick={() => toggleModal(null)}
+                <Dropdown
+                  trigger={["click", "hover"]}
+                  overlay={() => (
+                    <Menu onClick={(value) => topMenuItemHandler(value)}>
+                      <Menu.Item key="add">Tambah Data</Menu.Item>
+                      <Menu.Item key="import">
+                        <Upload
+                          action="http://localhost:1001/api/import/salary"
+                          withCredentials={true}
+                          showUploadList={false}
+                          // accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                          accept=".csv"
+                          onChange={(values) => importData(values)}
+                        >
+                          Import Data
+                        </Upload>
+                      </Menu.Item>
+                      <Menu.Item key="download">Download File Import</Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item key="excel">Export Excel</Menu.Item>
+                      <Menu.Item key="csv">Export CSV</Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item key="delete">
+                        <Text type="danger">
+                          ({selectedRows.length}) Hapus Data
+                        </Text>
+                      </Menu.Item>
+                    </Menu>
+                  )}
                 >
-                  Tambah Data
-                </Button>
-              </Col>
-              <Col xs={24} lg={4}>
-                <Upload
-                  action="http://localhost:1001/api/import/salary"
-                  withCredentials={true}
-                  showUploadList={false}
-                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-                  onChange={(values) => importData(values)}
-                >
-                  <Button
-                    type="primary"
-                    block={true}
-                    icon={<ImportOutlined />}
-                    style={{ width: "100%" }}
-                  >
-                    Import Data
+                  <Button block>
+                    Menu <MenuFoldOutlined />
                   </Button>
-                </Upload>
+                </Dropdown>
               </Col>
               <Col xs={24} lg={6}>
                 <Button

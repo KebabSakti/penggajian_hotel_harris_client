@@ -4,6 +4,8 @@ import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import "antd/dist/antd.css";
 
+require("dotenv").config();
+
 ReactDOM.render(
   <React.StrictMode>
     <AuthProvider>
