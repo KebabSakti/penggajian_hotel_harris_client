@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { SearchOutlined } from "@ant-design/icons";
-import { fetchSalaries, addSalary, updateSalary } from "../api/Salary";
+import SalaryForm from "../components/SalaryForm";
 import moment from "moment";
 import "moment/locale/id";
-import { formatCurrency } from "../helper/Helper";
+import { formatCurrency, mMessage } from "../helper/Helper";
+import {
+  fetchSalaries,
+  addSalary,
+  updateSalary,
+  deleteSalary,
+} from "../api/Salary";
 import {
   ImportOutlined,
   MailOutlined,
   PlusCircleOutlined,
   MenuFoldOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import {
   Input,
@@ -22,15 +29,17 @@ import {
   Dropdown,
   Menu,
   Typography,
+  Modal,
+  Upload,
 } from "antd";
-import Modal from "antd/lib/modal/Modal";
-import SalaryForm from "../components/SalaryForm";
 
 function SalaryPage() {
   const { RangePicker } = DatePicker;
   const { Text } = Typography;
+  const { confirm } = Modal;
 
   const dateFormat = "DD/MM/YYYY";
+
   const [modalContent, setModalContent] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [records, setRecords] = useState([]);
@@ -49,7 +58,9 @@ function SalaryPage() {
     showLessItems: true,
     responsive: true,
     position: ["bottomCenter"],
+    showSizeChanger: true,
   });
+
   const columns = [
     {
       title: "Bulan",
@@ -127,7 +138,6 @@ function SalaryPage() {
       dataIndex: "salary_day_total",
       ellipsis: true,
       sorter: true,
-      render: (value) => formatCurrency(value),
     },
     {
       title: "Gaji Per Hari",
@@ -255,7 +265,7 @@ function SalaryPage() {
           >
             {/* <Menu.Item key="email">Email Slip Gaji</Menu.Item> */}
             <Menu.Item key="cetak">Cetak Slip Gaji</Menu.Item>
-            <Divider style={{ padding: "0px", margin: "0px" }} />
+            <Menu.Divider style={{ padding: "0px", margin: "0px" }} />
             <Menu.Item key="edit">Edit</Menu.Item>
             <Menu.Item key="hapus">
               <Text type="danger">Hapus</Text>
@@ -325,49 +335,108 @@ function SalaryPage() {
   async function createSalary(values) {
     try {
       setSubmitLoading(true);
-      return await addSalary(values).then((response) => {
-        setRecords([...records, response.data]);
 
-        setPagination({ ...pagination, pageSize: pagination.pageSize + 1 });
+      mMessage("Memproses data, mohon tunggu", "loading");
+
+      return await addSalary(values).then((response) => {
+        fetch(
+          {
+            size: pagination.pageSize,
+            date_start: periode[0],
+            date_end: periode[1],
+          },
+          { page: pagination.current }
+        );
 
         setSubmitLoading(false);
 
-        message.success("Data berhasil di tambah");
+        mMessage("Data berhasil di tambah", "success");
 
         return response.data;
       });
     } catch (e) {
       setSubmitLoading(false);
-      message.error(e.message);
+
+      mMessage(e.message, "error");
     }
   }
 
   async function editSalary(values) {
     try {
       setSubmitLoading(true);
+
+      mMessage("Memproses data, mohon tunggu", "loading");
+
       return await updateSalary(values).then((response) => {
-        //clone it
-        const newRecords = [...records];
-
-        //find index from cloned array
-        const index = newRecords.findIndex(
-          (item) => item.salary_id === response.data.salary_id
+        fetch(
+          {
+            size: pagination.pageSize,
+            date_start: periode[0],
+            date_end: periode[1],
+          },
+          { page: pagination.current }
         );
-
-        //found it then update it
-        newRecords[index] = response.data;
-
-        setRecords(newRecords);
 
         setSubmitLoading(false);
 
-        message.success("Data berhasil di update");
+        mMessage("Data berhasil di update", "success");
 
         return response.data;
       });
     } catch (e) {
       setSubmitLoading(false);
-      message.error(e.message);
+
+      mMessage(e.message, "error");
+    }
+  }
+
+  async function destroySalary(value) {
+    try {
+      setLoading(true);
+
+      mMessage("Memproses data, mohon tunggu", "loading");
+
+      deleteSalary({ salary_id: value.salary_id }).then(() => {
+        fetch(
+          {
+            size: pagination.pageSize,
+            date_start: periode[0],
+            date_end: periode[1],
+          },
+          { page: pagination.current }
+        );
+
+        setLoading(false);
+
+        mMessage("Data berhasil di hapus", "success");
+      });
+    } catch (e) {
+      setLoading(false);
+
+      mMessage(e.message, "error");
+    }
+  }
+
+  function importData(values) {
+    mMessage("Memproses file. mohon tunggu", "loading");
+
+    if (values.file.status === "done") {
+      console.log(values.file);
+
+      fetch(
+        {
+          size: pagination.pageSize,
+          date_start: periode[0],
+          date_end: periode[1],
+        },
+        { page: pagination.current }
+      );
+
+      mMessage("Import data berhasil", "success");
+    }
+
+    if (values.file.status === "error") {
+      mMessage(values.file.error.message, "error");
     }
   }
 
@@ -390,6 +459,14 @@ function SalaryPage() {
         break;
 
       case "hapus":
+        confirm({
+          title: "Anda yakin?",
+          icon: <ExclamationCircleOutlined />,
+          content: "Proses ini tidak dapat dikembalikan",
+          onOk() {
+            destroySalary(record);
+          },
+        });
         break;
     }
   }
@@ -491,9 +568,22 @@ function SalaryPage() {
                 </Button>
               </Col>
               <Col xs={24} lg={4}>
-                <Button type="primary" block={true} icon={<ImportOutlined />}>
-                  Import Data
-                </Button>
+                <Upload
+                  action="http://localhost:1001/api/import/salary"
+                  withCredentials={true}
+                  showUploadList={false}
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                  onChange={(values) => importData(values)}
+                >
+                  <Button
+                    type="primary"
+                    block={true}
+                    icon={<ImportOutlined />}
+                    style={{ width: "100%" }}
+                  >
+                    Import Data
+                  </Button>
+                </Upload>
               </Col>
               <Col xs={24} lg={6}>
                 <Button
@@ -542,13 +632,14 @@ function SalaryPage() {
         </Row>
       </div>
       <Table
+        showHeader={records.length > 0 && true}
         loading={loading}
         columns={columns}
         dataSource={records}
         pagination={pagination}
         bordered={true}
         sortDirections={["ascend", "descend", "ascend"]}
-        scroll={{ x: true, y: false }}
+        scroll={records.length > 0 && { x: true, y: false }}
         onChange={(pagination, filters, sorter) =>
           onChange(pagination, filters, sorter)
         }

@@ -15,3 +15,7 @@ export async function addSalary(datas) {
 export async function updateSalary(datas) {
   return await post("api/salary/update", datas);
 }
+
+export async function deleteSalary(datas) {
+  return await post("api/salary/delete", datas);
+}

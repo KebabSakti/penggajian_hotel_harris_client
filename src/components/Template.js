@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Button, Layout, Menu, Drawer, message, Col } from "antd";
+import { Button, Layout, Drawer, message } from "antd";
 import { AuthContext } from "../contexts/AuthContext";
 import { Footer } from "antd/lib/layout/layout";
 import { MenuOutlined } from "@ant-design/icons";
@@ -14,6 +14,10 @@ function Template({ children, ...props }) {
   useEffect(() => {
     check();
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerCollapsed ? "hidden" : "auto";
+  }, [drawerCollapsed]);
 
   async function navigate(target) {
     if (target !== props.history.location.pathname) {

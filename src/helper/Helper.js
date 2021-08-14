@@ -1,3 +1,5 @@
+import { message } from "antd";
+
 export function debounce(func, delay) {
   let debounceTimer;
   return function () {
@@ -15,4 +17,34 @@ export function formatCurrency(value) {
   });
 
   return formatter.format(value);
+}
+
+export function mMessage(msg, type) {
+  const msgKey = "message.key";
+
+  switch (type) {
+    case "loading":
+      message.loading({
+        key: msgKey,
+        content: msg,
+        duration: 0,
+      });
+      break;
+
+    case "success":
+      message.success({
+        key: msgKey,
+        content: msg,
+        duration: 1,
+      });
+      break;
+
+    case "error":
+      message.error({
+        key: msgKey,
+        content: msg,
+        duration: 2,
+      });
+      break;
+  }
 }

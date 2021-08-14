@@ -34,6 +34,21 @@ export default function SalaryForm({
           form.setFieldsValue({
             ...data,
             salary_periode: moment(data?.salary_periode) ?? moment(),
+            salary_basic: parseFloat(data.salary_basic),
+            salary_allowance: parseFloat(data.salary_allowance),
+            salary_bpjs: parseFloat(data.salary_bpjs),
+            salary_final: parseFloat(data.salary_final),
+            salary_incentive: parseFloat(data.salary_incentive),
+            salary_jht: parseFloat(data.salary_jht),
+            salary_meal_allowance: parseFloat(data.salary_meal_allowance),
+            salary_misc: parseFloat(data.salary_misc),
+            salary_overtime: parseFloat(data.salary_overtime),
+            salary_per_day: parseFloat(data.salary_per_day),
+            salary_pph: parseFloat(data.salary_pph),
+            salary_service_charge: parseFloat(data.salary_service_charge),
+            salary_additional_service: parseFloat(
+              data.salary_additional_service
+            ),
           });
         }
 
@@ -62,24 +77,29 @@ export default function SalaryForm({
     }
   }
 
-  function onValuesCHange(changedValue, allValues) {
+  function onValuesChange(changedValue, allValues) {
     const salaryBasic = allValues.salary_working_day * allValues.salary_per_day;
     const salaryJht = salaryBasic * 0.02;
     const salaryJp = salaryBasic * 0.01;
     const salaryBpjs = salaryBasic * 0.01;
-    const salaryFinal =
+
+    const salaryFone =
       salaryBasic +
       allValues.salary_additional_service +
       allValues.salary_overtime +
       allValues.salary_allowance +
       allValues.salary_meal_allowance +
       allValues.salary_incentive +
-      allValues.salary_service_charge -
-      (allValues.salary_pph +
-        salaryJht +
-        salaryJp +
-        salaryBpjs +
-        allValues.salary_misc);
+      allValues.salary_service_charge;
+
+    const salaryFtwo =
+      allValues.salary_pph +
+      salaryJht +
+      salaryJp +
+      salaryBpjs +
+      allValues.salary_misc;
+
+    const salaryFinal = salaryFone - salaryFtwo;
 
     //update fields
     form.setFieldsValue({
@@ -95,10 +115,15 @@ export default function SalaryForm({
     <Form
       form={form}
       layout="vertical"
-      onValuesChange={onValuesCHange}
+      onValuesChange={onValuesChange}
       onFinish={(values) => submitForm(values)}
     >
-      <Form.Item label="Periode" name="salary_periode" initialValue={moment()}>
+      <Form.Item
+        label="Periode"
+        name="salary_periode"
+        initialValue={moment()}
+        rules={[{ required: true, message: "Pilih periode data" }]}
+      >
         <DatePicker
           placeholder="Pilih bulan"
           picker={"month"}
@@ -107,11 +132,17 @@ export default function SalaryForm({
         />
       </Form.Item>
 
-      <Form.Item label="Karyawan" name="employee_id">
+      <Form.Item
+        label="Karyawan"
+        name="employee_id"
+        rules={[
+          { required: true, message: "Anda harus memilih satu karyawan" },
+        ]}
+      >
         <Select placeholder="Pilih karyawan" loading={loading}>
           {formData != null &&
             formData.emp.map((item) => (
-              <Option key={item.employee_id}>
+              <Option key={item.employee_id} value={item.employee_id}>
                 {item.employee_name} ({item.employee_id})
               </Option>
             ))}
@@ -130,7 +161,9 @@ export default function SalaryForm({
         <Select placeholder="Tax Status" loading={loading}>
           {formData != null &&
             formData.tax.map((item) => (
-              <Option key={item.id}>{item.tax_name}</Option>
+              <Option key={item.id} value={item.tax_name}>
+                {item.tax_name}
+              </Option>
             ))}
         </Select>
       </Form.Item>
