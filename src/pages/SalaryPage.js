@@ -4,6 +4,7 @@ import SalaryForm from "../components/SalaryForm";
 import moment from "moment";
 import "moment/locale/id";
 import { formatCurrency, mMessage } from "../helper/Helper";
+import { emailSalarySlip } from "../api/Mail";
 import {
   fetchSalaries,
   addSalary,
@@ -412,6 +413,26 @@ function SalaryPage() {
     }
   }
 
+  async function mailSalary() {
+    try {
+      setLoading(true);
+
+      mMessage("Mengirim email, jangan tutup window ini", "loading");
+
+      emailSalarySlip({
+        ids: selectedRows.map((item) => item.salary_id),
+      }).then((response) => {
+        setLoading(false);
+
+        mMessage("Email berhasil terkirim", "success");
+      });
+    } catch (e) {
+      setLoading(false);
+
+      mMessage(e.message, "error");
+    }
+  }
+
   function importData(values) {
     mMessage("Memproses file. mohon tunggu", "loading");
 
@@ -481,6 +502,11 @@ function SalaryPage() {
       //   break;
 
       case "cetak":
+        window.open(
+          process.env.REACT_APP_BASE_URL +
+            "/export/salary/pdf/" +
+            record.salary_id
+        );
         break;
 
       case "edit":
@@ -628,6 +654,7 @@ function SalaryPage() {
                   block={true}
                   icon={<MailOutlined />}
                   disabled={selectedRows.length == 0 ? true : false}
+                  onClick={mailSalary}
                 >
                   ({selectedRows.length}) Kirim Email
                 </Button>
